@@ -1,0 +1,5 @@
+{
+  "purpose": "Deliver dependable packages, command-line tools, and reusable libraries.",
+  "workflow": {"mode": "standard", "max_active_tasks": 2, "independent_review": false},
+  "focus": ["Public API and exit-code contracts", "Cross-platform behavior", "Packaging from a clean checkout", "Upgrade and deprecation paths"]
+}

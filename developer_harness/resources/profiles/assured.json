@@ -1,0 +1,5 @@
+{
+  "purpose": "Make changes to sensitive systems with independent review and explicit release evidence.",
+  "workflow": {"mode": "assured", "max_active_tasks": 1, "independent_review": true},
+  "focus": ["Threat model and data boundaries", "Independent review", "Migration and rollback evidence", "Human ownership of consequential actions"]
+}

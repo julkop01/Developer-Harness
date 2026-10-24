@@ -1,0 +1,5 @@
+{
+  "purpose": "A flexible workflow for building, maintaining, and understanding software.",
+  "workflow": {"mode": "standard", "max_active_tasks": 2, "independent_review": false},
+  "focus": ["Small acceptance contracts", "Inspect the existing stack", "Meaningful checks", "Clear recovery handoffs"]
+}

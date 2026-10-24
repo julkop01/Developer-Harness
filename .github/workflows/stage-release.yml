@@ -1,0 +1,51 @@
+name: Stage draft release
+
+# Deliberate opt-in: create a release/stage-* branch, or run this manually.
+# Ordinary main-branch pushes never publish or stage a release.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['release/stage-*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: draft-release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Verify release behavior
+        run: |
+          python -m unittest discover -s tests -v
+          python examples/walkthrough.py
+          python scripts/release_check.py
+      - name: Build and stage draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          [[ "$release_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          archive="dist/Developer-Harness-v${release_version}.zip"
+          python scripts/package_release.py --output "$archive"
+          if gh release view "v${release_version}" >/dev/null 2>&1; then
+            echo "Release already exists; leaving it unchanged."
+            exit 0
+          fi
+          gh release create "v${release_version}" "$archive" "${archive}.sha256" \
+            --draft --target "$SOURCE_SHA" \
+            --title "Developer Harness ${release_version}" --notes-file RELEASE_NOTES.md

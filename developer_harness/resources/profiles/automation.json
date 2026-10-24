@@ -1,0 +1,5 @@
+{
+  "purpose": "Develop bounded, recoverable automations with explicit side effects and ownership.",
+  "workflow": {"mode": "assured", "max_active_tasks": 1, "independent_review": true},
+  "focus": ["Idempotency keys", "Retries with stop rules", "Dry-run and compensation", "Explicit external-action authorization"]
+}

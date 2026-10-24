@@ -1,0 +1,5 @@
+{
+  "purpose": "Build usable web applications and APIs with observable behavior and stable contracts.",
+  "workflow": {"mode": "standard", "max_active_tasks": 2, "independent_review": false},
+  "focus": ["End-to-end user journey", "API compatibility and migrations", "Accessibility and real browser proof", "Authentication and failure states"]
+}

@@ -1,0 +1,5 @@
+{
+  "purpose": "Produce reproducible data work with explicit assumptions and traceable conclusions.",
+  "workflow": {"mode": "standard", "max_active_tasks": 1, "independent_review": false},
+  "focus": ["Dataset provenance and versions", "Simple baseline comparisons", "Leakage and holdout controls", "Separate findings from hypotheses"]
+}

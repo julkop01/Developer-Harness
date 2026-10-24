@@ -1,0 +1,52 @@
+{
+  "product": "Developer Harness",
+  "version": "1.0.0",
+  "date": "2026-10-24",
+  "environment": {
+    "python": "3.12.14",
+    "os": "Linux",
+    "machine": "x86_64"
+  },
+  "checks": [
+    {
+      "command": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "exit_code": 0,
+      "tests": 86,
+      "output_tail": "ached_exactly (test_harness.RunnerTests.test_successful_check_cached_exactly) ... ok\ntest_timeout_fails_and_bounds_runtime (test_harness.RunnerTests.test_timeout_fails_and_bounds_runtime) ... ok\ntest_unknown_check_rejected (test_harness.RunnerTests.test_unknown_check_rejected) ... ok\ntest_builder_cannot_attest_to_independence (test_harness.TaskTests.test_builder_cannot_attest_to_independence) ... ok\ntest_dependency_gates_activation (test_harness.TaskTests.test_dependency_gates_activation) ... ok\ntest_high_risk_needs_independent_review (test_harness.TaskTests.test_high_risk_needs_independent_review) ... ok\ntest_latest_failing_review_blocks_done (test_harness.TaskTests.test_latest_failing_review_blocks_done) ... ok\ntest_lifecycle_requires_evidence_and_review (test_harness.TaskTests.test_lifecycle_requires_evidence_and_review) ... ok\ntest_manual_evidence_is_labeled (test_harness.TaskTests.test_manual_evidence_is_labeled) ... ok\ntest_missing_criteria_rejected (test_harness.TaskTests.test_missing_criteria_rejected) ... ok\ntest_missing_scope_rejected (test_harness.TaskTests.test_missing_scope_rejected) ... ok\ntest_nonexistent_dependency_rejected (test_harness.TaskTests.test_nonexistent_dependency_rejected) ... ok\ntest_required_check_cannot_be_replaced_by_manual_note (test_harness.TaskTests.test_required_check_cannot_be_replaced_by_manual_note) ... ok\ntest_unknown_criterion_rejected (test_harness.TaskTests.test_unknown_criterion_rejected) ... ok\ntest_version_conflict_does_not_change_state (test_harness.TaskTests.test_version_conflict_does_not_change_state) ... ok\ntest_work_in_progress_limit (test_harness.TaskTests.test_work_in_progress_limit) ... ok\ntest_corrupt_manifest_fails_with_actionable_error (test_recovery_and_transactions.InstallerAtomicityTests.test_corrupt_manifest_fails_with_actionable_error) ... ok\ntest_regular_write_failure_rolls_back_earlier_replacements (test_recovery_and_transactions.InstallerAtomicityTests.test_regular_write_failure_rolls_back_earlier_replacements) ... ok\ntest_upgrade_removes_only_unchanged_obsolete_owned_file (test_recovery_and_transactions.InstallerAtomicityTests.test_upgrade_removes_only_unchanged_obsolete_owned_file) ... ok\ntest_abandoned_running_record_requires_explicit_recovery (test_recovery_and_transactions.RecoveryTests.test_abandoned_running_record_requires_explicit_recovery) ... ok\ntest_cli_check_failure_has_failure_exit_code (test_recovery_and_transactions.RecoveryTests.test_cli_check_failure_has_failure_exit_code) ... ok\ntest_configure_dry_run_preserves_configuration (test_recovery_and_transactions.RecoveryTests.test_configure_dry_run_preserves_configuration) ... ok\ntest_failed_transition_leaves_no_partial_event (test_recovery_and_transactions.RecoveryTests.test_failed_transition_leaves_no_partial_event) ... ok\ntest_init_rejects_symlinked_runtime (test_recovery_and_transactions.RecoveryTests.test_init_rejects_symlinked_runtime) ... ok\ntest_interruption_updates_receipt_and_retains_nonzero_time (test_recovery_and_transactions.RecoveryTests.test_interruption_updates_receipt_and_retains_nonzero_time) ... ok\ntest_later_failure_supersedes_earlier_pass_and_cache (test_recovery_and_transactions.RecoveryTests.test_later_failure_supersedes_earlier_pass_and_cache) ... ok\ntest_second_connection_rejects_stale_writer (test_recovery_and_transactions.RecoveryTests.test_second_connection_rejects_stale_writer) ... ok\n\n----------------------------------------------------------------------\nRan 86 tests in 4.120s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python",
+        "examples/walkthrough.py"
+      ],
+      "exit_code": 0,
+      "tests": null,
+      "output_tail": "Temporary workspace: /tmp/developer-harness-example-iol7pt6n\nResult: done\n\n# Developer Harness restart packet\n\nGenerated: 2026-10-24T13:03:04+00:00\nTask: task-77ddf313a08a | version 5 | done\nTitle: Verify addition\nObjective: Addition works for positive and negative input\nScopes: .\nCurrent fingerprint: c3b18235cb45c8d5db7fc6a7372f3f6fcaf717f38393e0163bee37027c82c82a\nEvidence gate: PASS\n\n## Acceptance contract\n- c1: Positive and negative regression examples pass\n\n## Resume instruction\nRead current files before editing. This packet is a navigation aid; source files and the ledger remain authoritative.\nCheckpoint: checkpoint-206e33f25b37\nCheckpoint sources changed: False\nCompleted: Both regression examples passed\nNext: Review acceptance and diff\nBlockers: none\n\n## Missing proof\n\n## Current decisions\n\n## Scoped source pointers\n- .gitignore: 61e276cd99840a52\n- calculator.py: ba1a531f581d2e60\n- test_calculator.py: 8cbf086acaaa07d7\n\nExample passed. Temporary files removed.\n"
+    },
+    {
+      "command": [
+        "python",
+        "scripts/release_check.py"
+      ],
+      "exit_code": 0,
+      "tests": null,
+      "output_tail": "{\n  \"ok\": true,\n  \"version\": \"1.0.0\",\n  \"python_sources\": 10,\n  \"markdown_files\": 37,\n  \"failures\": []\n}\n"
+    }
+  ],
+  "additional_validation": [
+    "Offline wheel build succeeded with --no-deps --no-build-isolation",
+    "Wheel installed and CLI/profiles ran in a clean virtual environment",
+    "Release artwork visually inspected; all visible copy correct",
+    "Source identifiers and private input files excluded from distribution"
+  ],
+  "hosted_ci": "Configured; not executed in the local validation environment",
+  "review": "Self-review with adversarial regression cases; no independent reviewer claimed"
+}

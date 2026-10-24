@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.harness/state.sqlite3*
+.harness/logs/
+.harness/context/
+.harness/exports/
+.harness/backups/
+.harness/install-manifest.json
+.env*
