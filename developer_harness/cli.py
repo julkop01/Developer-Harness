@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 import sys
 
-from . import __version__, config, context, engine, install, runner
+from . import __version__, adapters, config, context, engine, install, runner
 from .store import Store
 from .util import HarnessError, atomic_write, json_write, read_json, redact, safe_path
 
@@ -134,6 +134,12 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("doctor", help="configuration and ledger integrity")
     commands.add_parser("audit", help="integrity plus current completion-proof and memory freshness")
     commands.add_parser("capabilities")
+    commands.add_parser("adapters", help="list canonical host adapter capabilities")
+    p_protocol = commands.add_parser("protocol", help="inspect or validate canonical host adapter contracts")
+    protocol_actions = p_protocol.add_subparsers(dest="action", required=True)
+    protocol_actions.add_parser("list")
+    p_validate = protocol_actions.add_parser("validate")
+    p_validate.add_argument("file", help="repository-relative JSON document")
     commands.add_parser("status")
     return p
 
@@ -142,6 +148,7 @@ def capabilities() -> dict:
     return {"version": __version__, "local": ["install/update/uninstall plan", "configuration validation",
              "bounded repository discovery", "task contracts and version checks", "dependency gates", "source-bound receipts",
              "bounded named-check runner", "exact successful-check cache", "failure circuit", "checkpoint/resume",
+             "canonical host adapter contracts", "adapter capability registry",
              "scoped memory with provenance/expiry", "advisory scope leases", "usage ledger", "backup/export", "integrity audit"],
             "host_provided": ["AI reasoning and code editing", "model credentials", "sandbox/isolation", "network permissions",
                               "provider spend enforcement", "independent reviewer identity", "multi-agent scheduling"],
@@ -155,6 +162,12 @@ def dispatch(args) -> dict | list:
         return [{"id": p.stem, **read_json(p)} for p in sorted(directory.glob("*.json"))]
     if args.command == "capabilities":
         return capabilities()
+    if args.command == "adapters":
+        return adapters.adapters()
+    if args.command == "protocol":
+        if args.action == "list":
+            return adapters.protocols()
+        return adapters.validate(read_json(safe_path(root, args.file)))
     if args.command == "install":
         return install.install(root, args.profile, args.name, args.adapter, args.apply)
     if args.command == "uninstall":
