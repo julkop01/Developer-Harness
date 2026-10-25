@@ -1,11 +1,11 @@
-# Developer Harness 1.3.0
+# Developer Harness 1.4.0
 
-Developer Harness 1.3 turns the 1.2 host contracts into persistent, auditable local observations.
+Developer Harness 1.4 adds persistent normalized MCP inventory and cross-host drift detection.
 
-Validated `dh.session.v1` snapshots can now be ingested into the authoritative SQLite ledger. Session-bound `dh.tool_event.v1`, `dh.context.v1`, and `dh.permission.v1` records are accepted only after a matching session snapshot exists and only when the adapter identity matches. Exact duplicate events are idempotent; reused source identities with different content are rejected.
+Validated `dh.mcp.v1` records can now be stored in the local SQLite authority, keyed by adapter, scope, and logical server name. The harness computes a stable configuration signature and distinguishes ordinary fragmentation (the same server configured in multiple hosts) from actual drift (different effective transports/commands/URLs).
 
-The ledger migrates non-destructively from schema version 1 to 2 by adding `host_sessions` and `host_events`. Exports include the normalized host state, and `status` reports host session/event counts. New CLI commands provide session ingest/list/show and normalized event inspection.
+Secret-bearing MCP values are rejected before persistence. Environment variable names are allowed, but inline values, secret-looking command arguments, credential userinfo, and credential query parameters are not accepted.
 
-Host observations remain separate from task evidence. A tool event, permission observation, or session status can never satisfy an acceptance criterion or grant authority merely by being present in the ledger.
+New `mcp ingest`, `mcp list`, `mcp inventory`, and `mcp drift` commands expose the inventory without granting the MCP servers any authority. Ledger schema version 3 adds the inventory table and exports normalized MCP state.
 
-Persistent MCP inventory remains deliberately deferred; `dh.mcp.v1` is validation-only in this release.
+This remains local metadata and drift detection. Developer Harness still does not start MCP servers, install them, copy credentials, or modify host configuration automatically.
