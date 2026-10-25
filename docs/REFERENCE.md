@@ -13,6 +13,9 @@ Exit codes: **0** successful operation; **1** failed check or failing verificati
 | `adapters` | List known AI coding hosts, instruction surfaces, supported canonical contracts, and whether a native bridge is actually implemented |
 | `protocol list` | List the strict canonical host contracts and their fields |
 | `protocol validate FILE` | Validate a repository-local JSON document against `dh.session.v1`, `dh.tool_event.v1`, `dh.context.v1`, `dh.permission.v1`, or `dh.mcp.v1` |
+| `sessions ingest FILE` | Persist a validated session/tool/context/permission observation; session-bound records require a prior matching session |
+| `sessions list`, `sessions show ID` | Inspect normalized host session snapshots |
+| `host-events [--session ID] [--limit N]` | Inspect persisted normalized host events |
 | `config` | Show validated configuration |
 | `configure candidate.json [--apply]` | Validate a complete candidate; apply only when requested |
 | `task new TITLE --objective TEXT --criterion TEXT --scope PATH --owner NAME` | Create a small acceptance contract; repeat criteria/scopes as needed |
@@ -98,3 +101,12 @@ Version 1.2 separates host-specific event collection from the deterministic kern
 - `dh.mcp.v1`: normalized MCP configuration metadata with environment key names only, never inline secret values.
 
 The `adapters` command currently reports known host surfaces as `contract-ready` with `native_bridge: false`. This is intentional: instruction-file compatibility is not the same thing as a tested event bridge. Future native adapters must change that flag only with implementation and contract tests.
+
+
+## Persistent host observations
+
+Version 1.3 stores normalized host observations in the local SQLite authority. The database migration is additive: existing task, evidence, review, checkpoint, memory, usage, and event-chain data are retained while `host_sessions` and `host_events` are added.
+
+Session snapshots are keyed by host session id. An id cannot change adapters, and an older `updated_at` snapshot cannot overwrite newer state. Session-bound events require the session to exist and must report the same adapter. Exact duplicate events are returned idempotently. Conflicting reuse of a source event identity is rejected.
+
+These tables are observability state, not authority. They do not satisfy task criteria, approve permissions, authorize external actions, or establish reviewer independence. `dh.mcp.v1` remains validation-only until a separate persistent inventory/drift contract is implemented.

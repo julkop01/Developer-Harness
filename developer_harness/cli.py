@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 import sys
 
-from . import __version__, adapters, config, context, engine, install, runner
+from . import __version__, adapters, config, context, engine, install, runner, sessions
 from .store import Store
 from .util import HarnessError, atomic_write, json_write, read_json, redact, safe_path
 
@@ -140,6 +140,16 @@ def parser() -> argparse.ArgumentParser:
     protocol_actions.add_parser("list")
     p_validate = protocol_actions.add_parser("validate")
     p_validate.add_argument("file", help="repository-relative JSON document")
+    p_sessions = commands.add_parser("sessions", help="persist and inspect validated host session observations")
+    session_actions = p_sessions.add_subparsers(dest="action", required=True)
+    session_actions.add_parser("list")
+    p_show_session = session_actions.add_parser("show")
+    p_show_session.add_argument("id")
+    p_ingest = session_actions.add_parser("ingest")
+    p_ingest.add_argument("file", help="repository-relative canonical protocol JSON")
+    p_events = commands.add_parser("host-events", help="inspect persisted normalized host events")
+    p_events.add_argument("--session")
+    p_events.add_argument("--limit", type=int, default=100)
     commands.add_parser("status")
     return p
 
@@ -148,7 +158,7 @@ def capabilities() -> dict:
     return {"version": __version__, "local": ["install/update/uninstall plan", "configuration validation",
              "bounded repository discovery", "task contracts and version checks", "dependency gates", "source-bound receipts",
              "bounded named-check runner", "exact successful-check cache", "failure circuit", "checkpoint/resume",
-             "canonical host adapter contracts", "adapter capability registry",
+             "canonical host adapter contracts", "adapter capability registry", "persistent normalized host sessions and events",
              "scoped memory with provenance/expiry", "advisory scope leases", "usage ledger", "backup/export", "integrity audit"],
             "host_provided": ["AI reasoning and code editing", "model credentials", "sandbox/isolation", "network permissions",
                               "provider spend enforcement", "independent reviewer identity", "multi-agent scheduling"],
@@ -189,6 +199,14 @@ def dispatch(args) -> dict | list:
     config.load(root)
     with Store(root) as store:
         c = args.command
+        if c == "sessions":
+            if args.action == "list":
+                return sessions.sessions(store)
+            if args.action == "show":
+                return sessions.session(store, args.id)
+            return sessions.ingest(store, read_json(safe_path(root, args.file)))
+        if c == "host-events":
+            return sessions.events(store, args.session, args.limit)
         if c == "task":
             if args.action == "new":
                 return engine.new_task(store, args.title, args.objective, args.criterion, args.scope, args.owner, args.risk, args.depends_on)
@@ -262,6 +280,8 @@ def dispatch(args) -> dict | list:
         if c == "status":
             tasks = store.tasks()
             return {"workspace": config.load(root)["name"], "tasks": {s: sum(t["state"] == s for t in tasks) for s in engine.TRANSITIONS},
+                    "host_sessions": store.db.execute("SELECT count(*) FROM host_sessions").fetchone()[0],
+                    "host_events": store.db.execute("SELECT count(*) FROM host_events").fetchone()[0],
                     "budget": engine.budget(store), "integrity": store.audit()["ok"]}
     raise HarnessError("Unsupported command.")
 
