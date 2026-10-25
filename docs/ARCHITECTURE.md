@@ -6,12 +6,17 @@ Developer Harness has two cooperating parts: a deterministic local runtime and s
 flowchart TD
   O["Owner intent"] --> H["Existing AI coding host"]
   H --> W["Scoped workflows and personalization"]
+  H --> A["Canonical host observations"]
+  A --> S["Session/event ledger + MCP inventory"]
   H --> C["CLI contracts and gates"]
-  C --> L["Transactional local ledger"]
+  C --> L["Transactional task/evidence ledger"]
   C --> R["Bounded named checks"]
   R --> P["Source-bound proof receipts"]
   P --> C
   L --> X["Restart packet and backup"]
+  S --> CP["Read-only control-plane projection"]
+  L --> CP
+  CP --> H
   X --> H
 ```
 
@@ -22,7 +27,8 @@ flowchart TD
 | Owner/project | Intent, domain rules, authorization, acceptance meaning | That a passing tool result tests the right behavior |
 | AI host | Reasoning, edits, model choice, sandbox, credentials, real scheduling | Automatic correctness or review independence |
 | Harness config | Profile, communication, checks, required gates, local limits | Provider permissions or network isolation |
-| Ledger | Task versions, history, proof metadata, checkpoints, memory | Remote synchronization or hostile-user authentication |
+| Ledger | Task versions, history, proof metadata, checkpoints, memory, normalized host observations, MCP inventory | Remote synchronization or hostile-user authentication |
+| Control plane | Read-only composition of task proof, sessions, context pressure, MCP drift, worktrees, leases, budget, integrity | Permission grants, task mutation, autonomous correction, hosted collaboration |
 | Runner | Named argv execution, time/output bounds, receipts, exact cache | A security sandbox or global provider-cost control |
 
 ## Executable core
@@ -34,6 +40,11 @@ flowchart TD
 - `runner.py`: no-shell named checks, bounded output/time, cache and loop-stop rules.
 - `context.py`: structural discovery and bounded restart packets.
 - `install.py`: dry-run overlay, managed blocks, conflict detection, rollback on ordinary write failures, and uninstall.
+- `adapters.py`: strict model-neutral host protocol contracts and capability registry.
+- `sessions.py`: validated persistent session/tool/context/permission observations.
+- `mcp_inventory.py`: normalized MCP source inventory, secret rejection, fragmentation, and drift detection.
+- `worktrees.py`: read-only Git worktree lifecycle, conflict prediction, and conservative cleanup planning.
+- `control_plane.py`: unified observation ingress and read-only operator projection.
 - `cli.py`: command/exit-code boundary.
 
 ## State machine
@@ -66,7 +77,7 @@ Fingerprint boundaries are explicit. Ignored/generated/private files, dependency
 
 `.harness/state.sqlite3` is authoritative local runtime state. `.harness/config.json` and `.harness/PERSONALIZATION.md` are owner-maintained, versionable project configuration. Runtime database, logs, exports, and install manifests are ignored by Git. JSON exports are inspection artifacts, not a competing state authority. Consistent SQLite backups support restoration.
 
-SQLite uses transactions and WAL for multiple local processes. Task transitions require the current version. Advisory path leases detect overlapping declared work; they do not intercept editors. Use separate worktrees and separate local ledgers for concurrent writers. Do not put the live SQLite database on a network share or merge binary databases in Git.
+SQLite uses transactions and WAL for multiple local processes. Task transitions require the current version. Advisory path leases detect overlapping declared work; they do not intercept editors. Version 2.0 can observe multiple Git worktrees and associate normalized host sessions with declared worktree paths, but it still does not coordinate arbitrary editor writes or merge code automatically. Use separate worktrees and separate local ledgers for concurrent writers. Do not put the live SQLite database on a network share or merge binary databases in Git.
 
 ## Design decisions
 
@@ -75,4 +86,5 @@ SQLite uses transactions and WAL for multiple local processes. Task transitions 
 3. Context is a budget: pointers first, optional excerpts second, explicit omissions always.
 4. Memory records retain source provenance, scope, expiry, uncertainty, and supersession.
 5. Unattended work requires bounded authorization in the host. The core can prepare a queue and receipts without pretending to schedule or reason.
-6. Integrations are opt-in metadata and playbooks until a concrete implementation and its contract tests exist.
+6. Host integrations cross a strict contract boundary: normalized observations may be persisted and projected, but they do not become authorization or acceptance evidence.
+7. Operator visibility should be a read-only projection over authoritative state, not a second mutable control database.

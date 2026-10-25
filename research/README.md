@@ -1,6 +1,6 @@
 # Research and design basis
 
-Reviewed 2026-10-24. This is a design comparison, not a benchmark claiming superiority over another framework. The implementation is original and bundles no third-party agent framework code.
+Reviewed 2026-10-25. This is a design comparison, not a benchmark claiming superiority over another framework. The implementation is original and bundles no third-party agent framework code.
 
 ## What changed in harness practice
 
@@ -19,6 +19,7 @@ The useful shift is from long universal prompts toward smaller instructions, per
 | [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence) | Distinguish checkpoints from long-term state | Session checkpoints and reviewed memory have different lifecycles |
 | [OpenCode permissions](https://opencode.ai/docs/permissions/) | Explicit tool permission boundaries | Do not treat project instructions or local task state as tool authorization |
 | [MCP security guidance](https://modelcontextprotocol.io/docs/2025-11-25/tutorials/security/security_best_practices) | Minimize trust and privilege across tool boundaries | Integration ownership and data boundaries; untrusted content cannot grant authority |
+| [ECC](https://github.com/affaan-m/ECC) | Cross-harness session normalization, MCP inventory, worktree lifecycle, operator surfaces | Adopt the useful control-plane patterns behind stricter local evidence/provenance boundaries; do not copy catalog size as a goal |
 
 The former `gsd-build/get-shit-done` repository is archived and points to Open GSD Core. Canonical locations and maintenance status matter more than a screenshot's popularity. All external links and product behavior can change; revalidate before integrating.
 
@@ -28,7 +29,7 @@ Two owner-supplied repository baselines were inspected at fixed revisions, inclu
 
 Useful foundations: read before editing, narrow changes, truthful labels, separation of observations from decisions, simple baseline challenges, and explicit handoffs. The main improvement targets were large mandatory reading stacks, file-presence checks that could be mistaken for behavioral validation, approximate static context budgets, domain coupling, and runtime labels that exceeded their implementation.
 
-The new design uses actual task transitions, source-bound proof, bounded runner behavior, explicit capability boundaries, and documented recovery. This is an architectural improvement claim with locally tested mechanisms, not a measured claim that every AI task becomes faster or better.
+The 2.0 design uses actual task transitions, source-bound proof, bounded runner behavior, canonical host contracts, persistent session/event observations, MCP drift detection, read-only worktree lifecycle analysis, a unified control-plane projection, explicit capability boundaries, and documented recovery. This is an architectural improvement claim with tested mechanisms, not a measured claim that every AI task becomes faster or better.
 
 ## Screenshot: team director
 
@@ -63,12 +64,19 @@ The screenshot lists complementary tools, not twenty required dependencies. Thei
 
 Selected tool sources inspected directly: [RTK](https://github.com/rtk-ai/rtk), [Graphiti](https://github.com/getzep/graphiti), [LiteLLM](https://github.com/BerriAI/litellm), and [Crawl4AI](https://github.com/unclecode/crawl4ai). The remaining rows evaluate the ideas described in the supplied screenshot; they are not a current license/security audit of those packages. Verify versions, licenses, privacy, cost, and maintenance before use. For example, an adjacent proxy component can have a different license from its CLI.
 
+## What 2.0 now implements
+
+The earlier research targets around normalized host state, MCP fragmentation/drift, and worktree lifecycle are no longer just design candidates. Version 2.0 has strict `dh.session.v1`, `dh.tool_event.v1`, `dh.context.v1`, `dh.permission.v1`, and `dh.mcp.v1` contracts; persistent host observation and MCP inventory tables; secret-value rejection for MCP metadata; read-only Git worktree lifecycle/conflict analysis; and a unified read-only operator snapshot.
+
+These features remain deliberately separated from authority. A permission observation does not grant permission, a tool event is not acceptance evidence, MCP inventory does not start a server, and a cleanup plan does not delete a worktree.
+
 ## Candidate improvements to evaluate later
 
-1. A real host adapter exposing the CLI through MCP/ACP, with version and permission contract tests.
+1. Real native Codex/Claude/OpenCode/Gemini bridges that emit the canonical contracts, each with version and permission contract tests.
 2. Optional sandbox execution with a clear filesystem/network policy.
 3. Provider-reported cost collection and enforced reservations in a gateway.
-4. Retrieval benchmarks before embeddings, semantic memory, or compression.
+4. Portable human-readable memory projection and retrieval benchmarks before embeddings or semantic compression.
 5. Independent human/CI-signed proof for workflows needing stronger identity assurance.
+6. A thin local HUD/dashboard consuming the read-only control-plane JSON without creating a second state authority.
 
 These are extension directions, not unfinished features advertised as already working.

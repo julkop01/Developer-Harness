@@ -2,9 +2,9 @@
 
 # Developer Harness
 
-**A dependable working environment for your AI coding tool. Personalized in a conversation. Grounded in your repository.**
+**A deterministic local control plane for AI-assisted software work. Personalized in a conversation. Grounded in your repository.**
 
-Turn “build this” into a clear contract, bounded work, current verification, and a useful handoff. Keep your editor, model, and stack. Developer Harness supplies the operating discipline and a small executable core.
+Turn “build this” into a clear contract, bounded work, current verification, durable host observations, and an inspectable operator view. Keep your editor, model, and stack. Developer Harness supplies the operating discipline and a small executable core.
 
 Python 3.11+ · No runtime dependencies · Local by default · MIT
 
@@ -33,8 +33,13 @@ For a new project, use this repository as a starting point and say:
 | Governed memory | Candidates become decisions through review; source changes and expiry remain visible. |
 | Safe repository overlay | Inspect an installation plan, preserve owner files, detect local edits, and uninstall managed files. |
 | Portable workflows | Personalization, discovery, delivery, debugging, research, review, release, and bounded unattended work. |
+| Canonical host contracts | Normalize session, tool, context-pressure, permission, and MCP observations without coupling the kernel to one vendor. |
+| Host session/event ledger | Persist normalized host observations with adapter identity, ordering, idempotency, and conflict checks. |
+| MCP inventory and drift | Compare logical MCP server configuration across hosts while rejecting secret-bearing values before persistence. |
+| Worktree lifecycle | Inspect dirty, merged, merge-ready, conflicting, stale, and session-linked Git worktrees without mutating them. |
+| Unified control plane | One read-only snapshot across task proof health, host sessions, context pressure, MCP drift, worktrees, leases, budget, and ledger integrity. |
 
-The CLI never calls a model API. It runs alongside your existing AI tool. Network isolation, actual provider spending limits, reviewer identity, and agent scheduling belong to that host. See [capability boundaries](docs/CAPABILITIES.md).
+The CLI never calls a model API. It runs alongside your existing AI tool. Version 2.0 can validate and persist canonical host observations, but native event bridges are still separate host integrations rather than silently claimed features. Network isolation, actual provider spending limits, reviewer identity, and agent scheduling remain host-owned. See [capability boundaries](docs/CAPABILITIES.md).
 
 ## Manual quick start
 
@@ -45,6 +50,8 @@ python dh.py init --profile general
 python dh.py discover
 python dh.py doctor
 python dh.py profiles
+python dh.py adapters
+python dh.py protocol list
 ```
 
 Install into an existing repository by passing its path as `--root`:
@@ -60,7 +67,7 @@ The first command prints a plan. The second applies it. In the target project, u
 python .developer-harness/dh.py --root . doctor
 ```
 
-On Windows, `py -3.11` or a newer installed interpreter can replace `python`. Quote paths containing spaces. Git is optional; without it, built-in exclusions apply and Git metadata is unavailable.
+On Windows, `py -3.11` or a newer installed interpreter can replace `python`. Quote paths containing spaces. Git is optional for the core; when Git is unavailable, worktree analysis degrades to a bounded control-plane warning instead of pretending lifecycle data exists.
 
 ## A complete first task
 
@@ -91,9 +98,12 @@ python dh.py checkpoint TASK_ID --expect 2 --summary "Parser implemented; edge c
 python dh.py resume TASK_ID
 python dh.py backup --output .harness/backups/session.sqlite3
 python dh.py export --output .harness/exports/session.json
+python dh.py control-plane
+python dh.py worktrees --cleanup-plan
+python dh.py mcp inventory
 ```
 
-The local SQLite ledger is the authoritative task history. The backup is restorable; JSON exports support inspection and handoff. Keep backups outside the working directory too. See [recovery](docs/RECOVERY.md).
+The local SQLite ledger is the authoritative task history and normalized observation store. The backup is restorable; JSON exports support inspection and handoff. `control-plane` is a read-only projection over that state, not a second authority and not an autonomous agent. Keep backups outside the working directory too. See [recovery](docs/RECOVERY.md).
 
 ## Explore
 
@@ -115,6 +125,6 @@ python -m unittest discover -s tests -v
 python scripts/release_check.py
 ```
 
-The source checkout runs without pip. Optional packaging uses a standard PEP 517 build. CI covers Python 3.11–3.13 on Linux, Windows, and macOS. Local release validation is reported separately from unexecuted hosted CI.
+The source checkout runs without pip. Optional packaging uses a standard PEP 517 build. CI covers Python 3.11–3.13 on Linux, Windows, and macOS. Release staging requires a successful hosted validation run for the exact source commit, while packaged validation is generated separately from commands actually executed in the staging environment.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), and [LICENSE](LICENSE).
