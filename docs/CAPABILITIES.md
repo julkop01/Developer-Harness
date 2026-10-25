@@ -13,11 +13,16 @@
 | Memory provenance, expiry, supersession | Executable | Local keyword retrieval; decisions remain reviewable claims |
 | Advisory work leases | Executable | No filesystem locking against arbitrary editors |
 | External-usage accounting | Executable | Manually supplied observations; no billing/spend interception |
+| Canonical host contracts | Executable | Strict validation for session/tool/context/permission/MCP records; validation alone creates no authority |
+| Host session/event ledger | Executable | Persistent normalized observations; tool/permission records are not acceptance evidence or authorization |
+| MCP inventory and drift | Executable | Persistent local metadata; rejects secret-bearing values; does not launch/reconfigure servers |
+| Git worktree lifecycle | Executable | Read-only status/conflict/cleanup planning; never merges, deletes, prunes, or checks out |
+| Unified control plane | Executable | Read-only projection over authoritative stores; warnings only, no automatic corrective action |
 | Night queue and operating playbook | Plan and instructions | No daemon, cron job, agent dispatch, or automatic merge |
 | Codex/Claude/Gemini/Copilot entry files | Included text adapters | No claim that every host version auto-loads them identically |
-| MCP/ACP/provider adapters | Extension contracts | No protocol server or live integration bundled |
+| Native Codex/Claude/OpenCode/Gemini lifecycle bridges | Extension boundary | Canonical contracts exist; native event collectors are not yet bundled |
 | Cloud team collaboration | External host capability | No hosted control plane bundled |
 
-Python 3.11–3.13, Linux/Windows/macOS are the CI target matrix. This distribution's local checks ran on the environment stated in VALIDATION.md; a configured matrix is not a passed hosted matrix.
+Python 3.11–3.13 on Linux, Windows, and macOS are the hosted CI target matrix. Release staging is gated on a successful hosted validation run for the exact source commit; packaged validation separately records commands executed in the staging environment.
 
 No measured speedup, token-savings percentage, quality multiplier, or model-performance guarantee is claimed. Measure these on representative work before enabling an optimization.

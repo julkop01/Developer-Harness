@@ -16,6 +16,8 @@ Exit codes: **0** successful operation; **1** failed check or failing verificati
 | `sessions ingest FILE` | Persist a validated session/tool/context/permission observation; session-bound records require a prior matching session |
 | `sessions list`, `sessions show ID` | Inspect normalized host session snapshots |
 | `host-events [--session ID] [--limit N]` | Inspect persisted normalized host events |
+| `observe FILE` | Validate and route one canonical host observation into the appropriate local ledger/inventory |
+| `control-plane [--base main] [--stale-days N]` | Render the unified read-only operator snapshot |
 | `config` | Show validated configuration |
 | `configure candidate.json [--apply]` | Validate a complete candidate; apply only when requested |
 | `task new TITLE --objective TEXT --criterion TEXT --scope PATH --owner NAME` | Create a small acceptance contract; repeat criteria/scopes as needed |
@@ -128,3 +130,12 @@ Version 1.5 adds `worktrees [--base main] [--stale-days N] [--cleanup-plan]`. In
 A worktree is classified as `base`, `dirty`, `merged`, `merge-ready`, `conflict`, `stale`, or `idle`. Conflict prediction uses `git merge-tree --write-tree` so the current working tree is not modified. Session snapshots whose canonical `worktree` path matches a Git worktree are surfaced with that worktree.
 
 The cleanup plan contains candidates only when the harness has positive evidence that a worktree is clean and merged, or clean/stale with no linked session. Execution remains an operator or host responsibility.
+
+
+## Unified control plane
+
+Version 2.0 adds `observe FILE` and `control-plane`. Observation ingress validates the canonical protocol first, then routes `dh.mcp.v1` records to the MCP inventory and the session/tool/context/permission protocols to the host-observation ledger.
+
+The control-plane snapshot composes existing deterministic state instead of creating a second authority. It reports task proof health, host sessions, latest context pressure, MCP inventory/drift, worktree lifecycle state, advisory leases, budget state, and event-ledger integrity. It may surface warnings, but it does not change task states or execute corrective actions.
+
+The authority contract is explicit in every snapshot: the projection is read-only; host observations are not acceptance evidence; permission observations do not grant authority; and automatic actions are disabled. A workspace that is not inside a Git repository still receives a valid control-plane snapshot with a bounded `worktree-unavailable` warning.
