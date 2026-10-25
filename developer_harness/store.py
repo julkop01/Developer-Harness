@@ -127,8 +127,10 @@ class Store:
         with self.transaction():
             return {"schema_version": 2, "exported_at": now(), "tasks": self.tasks(),
                     **{name: self.records(name) for name in ("evidence", "reviews", "checkpoints", "memory", "usage")},
-                    "host_sessions": [dict(r) for r in self.db.execute("SELECT * FROM host_sessions ORDER BY rowid")],
-                    "host_events": [dict(r) for r in self.db.execute("SELECT * FROM host_events ORDER BY rowid")],
+                    "host_sessions": [{"id": r["id"], **json.loads(r["data"])}
+                                      for r in self.db.execute("SELECT id,data FROM host_sessions ORDER BY rowid")],
+                    "host_events": [{"id": r["id"], **json.loads(r["data"])}
+                                    for r in self.db.execute("SELECT id,data FROM host_events ORDER BY rowid")],
                     "events": [dict(r) for r in self.db.execute("SELECT * FROM events ORDER BY seq")]}
 
     def backup(self, destination: Path):
