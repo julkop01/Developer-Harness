@@ -6,9 +6,22 @@ grant tool authority, or claim that a host emits events it cannot actually emit.
 from __future__ import annotations
 
 from copy import deepcopy
+import re
 from typing import Any
+from urllib.parse import urlsplit, parse_qsl
 
 from .util import HarnessError
+
+SECRET_VALUE_PATTERNS = [
+    re.compile(r"^sk-[A-Za-z0-9_-]{16,}$", re.I),
+    re.compile(r"^ghp_[A-Za-z0-9]{16,}$"),
+    re.compile(r"^github_pat_[A-Za-z0-9_]{16,}$"),
+    re.compile(r"^gh[oprs]_[A-Za-z0-9]{16,}$"),
+    re.compile(r"^AIza[A-Za-z0-9_-]{16,}$"),
+    re.compile(r"^xox[baprs]-[A-Za-z0-9-]{10,}$"),
+]
+SECRET_FLAG = re.compile(r"(^|[-_])(api[-_]?key|apikey|token|secret|password|passwd|auth|credential|access[-_]?key|private[-_]?key)$", re.I)
+SECRET_QUERY = re.compile(r"^(token|key|api[_-]?key|access[_-]?token|secret|password|auth)$", re.I)
 
 PROTOCOLS = {
     "dh.session.v1": {
@@ -121,6 +134,33 @@ def _validate_list_of_strings(value: Any, field: str) -> None:
         raise HarnessError(f"Protocol field {field} must be a string array.")
 
 
+def _looks_secret(value: str) -> bool:
+    if any(pattern.search(value) for pattern in SECRET_VALUE_PATTERNS):
+        return True
+    return (len(value) >= 32 and re.fullmatch(r"[A-Za-z0-9_+/=.-]+", value) is not None
+            and re.search(r"[A-Za-z]", value) is not None and re.search(r"[0-9]", value) is not None
+            and "/" not in value and "@" not in value)
+
+
+def _reject_mcp_secrets(document: dict) -> None:
+    args = document.get("args", [])
+    for index, value in enumerate(args):
+        if _looks_secret(value):
+            raise HarnessError("MCP args must not contain secret-looking values.")
+        inline = re.match(r"^(--?[A-Za-z0-9_-]+)=(.+)$", value)
+        if inline and (SECRET_FLAG.search(inline.group(1).lstrip("-")) or _looks_secret(inline.group(2))):
+            raise HarnessError("MCP args must not contain inline secret values.")
+        if index and SECRET_FLAG.search(args[index - 1].lstrip("-")):
+            raise HarnessError("MCP args must not contain values following secret-named flags.")
+    url = document.get("url")
+    if url:
+        parsed = urlsplit(url)
+        if parsed.username or parsed.password:
+            raise HarnessError("MCP URLs must not contain userinfo credentials.")
+        if any(SECRET_QUERY.search(key) for key, _ in parse_qsl(parsed.query, keep_blank_values=True)):
+            raise HarnessError("MCP URLs must not contain credential query parameters.")
+
+
 def validate(document: dict) -> dict:
     """Validate one canonical adapter document and return a defensive copy."""
     if not isinstance(document, dict):
@@ -157,6 +197,7 @@ def validate(document: dict) -> dict:
             raise HarnessError("HTTP/SSE MCP entries require url.")
         if any("=" in key or not key.strip() for key in document["env_keys"]):
             raise HarnessError("MCP env_keys may contain names only, never secret values.")
+        _reject_mcp_secrets(document)
     if schema == "dh.context.v1":
         used, limit = document.get("used"), document.get("limit")
         if used is not None and used < 0 or limit is not None and limit <= 0:

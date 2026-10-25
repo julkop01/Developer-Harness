@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0 — 2026-10-25
+
+Added persistent MCP inventory and cross-host drift detection.
+
+- Added SQLite schema v3 MCP source inventory.
+- Added stable logical configuration signatures.
+- Distinguished duplicated/fragmented configuration from inconsistent drift.
+- Added MCP inventory and drift CLI surfaces.
+- Rejected secret-looking command arguments, secret flag values, URL userinfo, and credential query parameters before persistence.
+- Kept MCP inventory observational: it does not start servers or grant capabilities.
+
 ## 1.3.0 — 2026-10-25
 
 Added persistent normalized host session and event observations.

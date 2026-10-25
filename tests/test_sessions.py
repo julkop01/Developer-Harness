@@ -49,9 +49,9 @@ class HostSessionLedgerTests(unittest.TestCase):
         self.store.close()
         self.temp.cleanup()
 
-    def test_schema_migrates_to_version_two(self):
+    def test_schema_migrates_to_current_version(self):
         version = self.store.db.execute("PRAGMA user_version").fetchone()[0]
-        self.assertEqual(version, 2)
+        self.assertEqual(version, 3)
 
     def test_session_snapshot_upserts_idempotently(self):
         first = sessions.ingest(self.store, session_payload())
@@ -113,7 +113,7 @@ class HostSessionLedgerTests(unittest.TestCase):
         sessions.ingest(self.store, session_payload())
         sessions.ingest(self.store, tool_payload())
         exported = self.store.export()
-        self.assertEqual(exported["schema_version"], 2)
+        self.assertEqual(exported["schema_version"], 3)
         self.assertEqual(len(exported["host_sessions"]), 1)
         self.assertEqual(len(exported["host_events"]), 1)
 
@@ -129,7 +129,7 @@ class HostSessionLedgerTests(unittest.TestCase):
         finally:
             db.close()
         self.store = Store(self.root)
-        self.assertEqual(self.store.db.execute("PRAGMA user_version").fetchone()[0], 2)
+        self.assertEqual(self.store.db.execute("PRAGMA user_version").fetchone()[0], 3)
         names = {row[0] for row in self.store.db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         self.assertIn("host_sessions", names)
         self.assertIn("host_events", names)
