@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS checkpoints (
 CREATE TABLE IF NOT EXISTS memory (id TEXT PRIMARY KEY, data TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS leases (task_id TEXT PRIMARY KEY REFERENCES tasks(id), owner TEXT NOT NULL, expires REAL NOT NULL, scopes TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS usage (id TEXT PRIMARY KEY, amount INTEGER NOT NULL, data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS host_sessions (
+ id TEXT PRIMARY KEY, adapter TEXT NOT NULL, updated_at TEXT NOT NULL, data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS host_events (
+ id TEXT PRIMARY KEY, source_key TEXT NOT NULL UNIQUE, session_id TEXT,
+ schema TEXT NOT NULL, created_at TEXT NOT NULL, data TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS events (
  seq INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, kind TEXT NOT NULL,
  entity TEXT NOT NULL, payload TEXT NOT NULL, previous TEXT NOT NULL, hash TEXT NOT NULL);
@@ -46,11 +51,11 @@ class Store:
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA busy_timeout=20000")
         version = self.db.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1):
+        if version not in (0, 1, 2):
             self.db.close()
             raise HarnessError(f"Unsupported ledger schema {version}; use a matching harness version.")
         self.db.executescript(SCHEMA)
-        self.db.execute("PRAGMA user_version=1")
+        self.db.execute("PRAGMA user_version=2")
 
     def close(self):
         self.db.close()
@@ -120,8 +125,12 @@ class Store:
 
     def export(self) -> dict:
         with self.transaction():
-            return {"schema_version": 1, "exported_at": now(), "tasks": self.tasks(),
+            return {"schema_version": 2, "exported_at": now(), "tasks": self.tasks(),
                     **{name: self.records(name) for name in ("evidence", "reviews", "checkpoints", "memory", "usage")},
+                    "host_sessions": [{"id": r["id"], **json.loads(r["data"])}
+                                      for r in self.db.execute("SELECT id,data FROM host_sessions ORDER BY rowid")],
+                    "host_events": [{"id": r["id"], **json.loads(r["data"])}
+                                    for r in self.db.execute("SELECT id,data FROM host_events ORDER BY rowid")],
                     "events": [dict(r) for r in self.db.execute("SELECT * FROM events ORDER BY seq")]}
 
     def backup(self, destination: Path):
