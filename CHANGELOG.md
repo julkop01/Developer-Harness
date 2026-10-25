@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0 — 2026-10-25
+
+Added persistent normalized host session and event observations.
+
+- Added non-destructive SQLite schema v2 migration with host session/event tables.
+- Added validated session snapshot upsert with adapter identity and monotonic timestamp checks.
+- Added idempotent tool/context/permission event ingestion with source-key conflict detection.
+- Added session/event CLI inspection and host counts in status.
+- Included normalized host state in exports.
+- Kept host observations strictly separate from acceptance evidence and authorization.
+- Kept MCP persistence deferred rather than silently overclaiming inventory support.
+
 ## 1.2.0 — 2026-10-25
 
 Introduced the canonical host-adapter substrate.
