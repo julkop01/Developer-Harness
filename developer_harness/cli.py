@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 import sys
 
-from . import __version__, adapters, config, context, engine, install, mcp_inventory, runner, sessions
+from . import __version__, adapters, config, context, engine, install, mcp_inventory, runner, sessions, worktrees
 from .store import Store
 from .util import HarnessError, atomic_write, json_write, read_json, redact, safe_path
 
@@ -150,6 +150,10 @@ def parser() -> argparse.ArgumentParser:
     p_events = commands.add_parser("host-events", help="inspect persisted normalized host events")
     p_events.add_argument("--session")
     p_events.add_argument("--limit", type=int, default=100)
+    p_worktrees = commands.add_parser("worktrees", help="inspect Git worktree lifecycle without mutating it")
+    p_worktrees.add_argument("--base", default="main")
+    p_worktrees.add_argument("--stale-days", type=int, default=7)
+    p_worktrees.add_argument("--cleanup-plan", action="store_true")
     p_mcp = commands.add_parser("mcp", help="persist and inspect normalized MCP inventory")
     mcp_actions = p_mcp.add_subparsers(dest="action", required=True)
     p_mcp_ingest = mcp_actions.add_parser("ingest")
@@ -214,6 +218,9 @@ def dispatch(args) -> dict | list:
             return sessions.ingest(store, read_json(safe_path(root, args.file)))
         if c == "host-events":
             return sessions.events(store, args.session, args.limit)
+        if c == "worktrees":
+            report = worktrees.report(root, args.base, args.stale_days, store)
+            return worktrees.cleanup_plan(report) if args.cleanup_plan else report
         if c == "mcp":
             if args.action == "ingest":
                 return mcp_inventory.ingest(store, read_json(safe_path(root, args.file)))
