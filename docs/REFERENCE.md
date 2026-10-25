@@ -119,3 +119,12 @@ Version 1.4 can persist validated `dh.mcp.v1` records with `mcp ingest FILE`. Ea
 The signature covers transport plus command/arguments for stdio, or transport plus URL for remote MCP. Environment key names are metadata and are not part of the effective endpoint signature. Secret values are rejected before persistence: do not put credentials in args, URLs, or `env_keys` values.
 
 This inventory is diagnostic only. It does not install, launch, enable, disable, or authorize MCP servers, and it does not read global host configuration automatically in 1.4.
+
+
+## Worktree lifecycle
+
+Version 1.5 adds `worktrees [--base main] [--stale-days N] [--cleanup-plan]`. Inspection is read-only: the harness calls Git status/history/worktree and merge-tree commands but never checks out, merges, removes, prunes, or deletes worktrees.
+
+A worktree is classified as `base`, `dirty`, `merged`, `merge-ready`, `conflict`, `stale`, or `idle`. Conflict prediction uses `git merge-tree --write-tree` so the current working tree is not modified. Session snapshots whose canonical `worktree` path matches a Git worktree are surfaced with that worktree.
+
+The cleanup plan contains candidates only when the harness has positive evidence that a worktree is clean and merged, or clean/stale with no linked session. Execution remains an operator or host responsibility.
