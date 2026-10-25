@@ -16,6 +16,13 @@ from .store import Store, new_id
 from .util import HarnessError, atomic_write, canonical, file_hash, now, redact, safe_path
 
 
+def _elapsed_seconds(start_ns: int) -> float:
+    """Return a positive high-resolution monotonic duration."""
+    elapsed = max(0, time.perf_counter_ns() - start_ns) / 1_000_000_000
+    resolution = max(time.get_clock_info("perf_counter").resolution, 0.000001)
+    return max(round(elapsed, 6), resolution)
+
+
 def _terminate(process):
     try:
         if os.name == "posix":
@@ -32,7 +39,7 @@ def execute(argv: list[str], root: Path, timeout: float, max_bytes: int) -> dict
                "SYSTEMROOT", "TEMP", "TMP", "TMPDIR", "LANG", "LC_ALL"}
     env = {key: value for key, value in os.environ.items() if key in allowed}
     env.update(CI="1", NO_COLOR="1", PYTHONUNBUFFERED="1")
-    start = time.monotonic()
+    start_ns = time.perf_counter_ns()
     try:
         process = subprocess.Popen(argv, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    env=env, shell=False, start_new_session=os.name == "posix")
@@ -65,7 +72,7 @@ def execute(argv: list[str], root: Path, timeout: float, max_bytes: int) -> dict
                 status = "output_limit"
                 _terminate(process)
                 break
-            if time.monotonic() - start > timeout:
+            if _elapsed_seconds(start_ns) > timeout:
                 status = "timeout"
                 _terminate(process)
                 break
@@ -87,7 +94,7 @@ def execute(argv: list[str], root: Path, timeout: float, max_bytes: int) -> dict
         if not thread.is_alive():
             process.stdout.close()
     return {"status": status or ("passed" if process.returncode == 0 else "failed"),
-            "exit_code": process.returncode, "elapsed_seconds": round(time.monotonic() - start, 4),
+            "exit_code": process.returncode, "elapsed_seconds": _elapsed_seconds(start_ns),
             "output": redact(bytes(chunks).decode("utf-8", errors="replace")),
             "output_truncated": exceeded.is_set()}
 
@@ -138,7 +145,7 @@ def run_check(store: Store, task_id: str, version: int, name: str, criteria: lis
         store.db.execute("INSERT INTO evidence VALUES(?,?,?,?,?)", (run_id, task_id, "check", record["created_at"], canonical(record)))
         store.event("check.started", task_id, {"id": run_id, "command": name, "fingerprint": before["sha256"]})
     # Don't hold a database write lock while arbitrary project code runs.
-    execution_started = time.monotonic()
+    execution_started_ns = time.perf_counter_ns()
     try:
         result = execute(argv, store.root, timeout, limits["max_log_bytes"])
         after = fingerprint(store.root, task, configuration.load(store.root))
@@ -149,7 +156,7 @@ def run_check(store: Store, task_id: str, version: int, name: str, criteria: lis
         atomic_write(safe_path(store.root, log_path), result["output"])
         record.update(artifact=log_path, artifact_sha256=file_hash(safe_path(store.root, log_path)), finished_at=now())
     except BaseException as exc:
-        record.update(status="interrupted", elapsed_seconds=round(time.monotonic() - execution_started, 4),
+        record.update(status="interrupted", elapsed_seconds=_elapsed_seconds(execution_started_ns),
                       error=redact(str(exc)), finished_at=now())
         with store.transaction():
             store.db.execute("UPDATE evidence SET data=? WHERE id=?", (canonical(record), run_id))
