@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 — 2026-10-25
+
+Introduced the canonical host-adapter substrate.
+
+- Added strict versioned session, tool-event, context, permission, and MCP contracts.
+- Added a truthful host capability registry for Codex, Claude Code, OpenCode, Gemini CLI, Cursor, and Copilot.
+- Added CLI surfaces for adapter discovery and protocol validation.
+- Reject unknown fields, unknown adapters, invalid enumerations, and MCP environment values containing secrets.
+- Added dedicated adapter contract tests.
+- Native bridges remain explicitly unimplemented until separately integrated and tested.
+
 ## 1.1.0 — 2026-10-25
 
 Hardening release focused on trustworthy release evidence and cross-platform determinism.
