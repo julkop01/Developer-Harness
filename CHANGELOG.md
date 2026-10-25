@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0 — 2026-10-25
+
+Introduced the unified read-only operator control-plane foundation.
+
+- Added unified canonical observation ingress with deterministic routing.
+- Added one control-plane snapshot across tasks, proof health, sessions, context pressure, MCP drift, worktrees, leases, budget, and integrity.
+- Added warnings for stale proof, context pressure/compaction, MCP drift, dirty/conflicting worktrees, unavailable Git state, and ledger-integrity failures.
+- Kept the control plane explicitly read-only and non-authoritative.
+- Added cross-platform control-plane tests including graceful non-Git behavior.
+
 ## 1.5.0 — 2026-10-25
 
 Added read-only worktree lifecycle and coordination visibility.
