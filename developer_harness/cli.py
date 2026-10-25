@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 import sys
 
-from . import __version__, adapters, config, context, engine, install, mcp_inventory, runner, sessions, worktrees
+from . import __version__, adapters, config, context, control_plane, engine, install, mcp_inventory, runner, sessions, worktrees
 from .store import Store
 from .util import HarnessError, atomic_write, json_write, read_json, redact, safe_path
 
@@ -150,6 +150,11 @@ def parser() -> argparse.ArgumentParser:
     p_events = commands.add_parser("host-events", help="inspect persisted normalized host events")
     p_events.add_argument("--session")
     p_events.add_argument("--limit", type=int, default=100)
+    p_observe = commands.add_parser("observe", help="ingest one canonical host observation into the appropriate local store")
+    p_observe.add_argument("file", help="repository-relative canonical protocol JSON")
+    p_control = commands.add_parser("control-plane", help="render the read-only deterministic operator snapshot")
+    p_control.add_argument("--base", default="main")
+    p_control.add_argument("--stale-days", type=int, default=7)
     p_worktrees = commands.add_parser("worktrees", help="inspect Git worktree lifecycle without mutating it")
     p_worktrees.add_argument("--base", default="main")
     p_worktrees.add_argument("--stale-days", type=int, default=7)
@@ -170,6 +175,7 @@ def capabilities() -> dict:
              "bounded repository discovery", "task contracts and version checks", "dependency gates", "source-bound receipts",
              "bounded named-check runner", "exact successful-check cache", "failure circuit", "checkpoint/resume",
              "canonical host adapter contracts", "adapter capability registry", "persistent normalized host sessions and events",
+             "unified host observation ingress", "read-only deterministic control-plane snapshot",
              "scoped memory with provenance/expiry", "advisory scope leases", "usage ledger", "backup/export", "integrity audit"],
             "host_provided": ["AI reasoning and code editing", "model credentials", "sandbox/isolation", "network permissions",
                               "provider spend enforcement", "independent reviewer identity", "multi-agent scheduling"],
@@ -210,6 +216,10 @@ def dispatch(args) -> dict | list:
     config.load(root)
     with Store(root) as store:
         c = args.command
+        if c == "observe":
+            return control_plane.ingest(store, read_json(safe_path(root, args.file)))
+        if c == "control-plane":
+            return control_plane.snapshot(store, args.base, args.stale_days)
         if c == "sessions":
             if args.action == "list":
                 return sessions.sessions(store)
