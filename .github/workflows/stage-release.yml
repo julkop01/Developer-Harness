@@ -1,14 +1,18 @@
 name: Stage draft release
 
-# Deliberate opt-in: create a release/stage-* branch, or run this manually.
-# Ordinary main-branch pushes never publish or stage a release.
+# Draft staging follows a successful full validation matrix for the exact commit.
+# Manual dispatch is allowed, but it also requires an already-successful validation
+# workflow for the selected commit. Nothing in this workflow publishes a release.
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows: ['Validate Developer Harness']
+    types: [completed]
     branches: ['release/stage-*']
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: draft-release-${{ github.repository }}
@@ -16,25 +20,52 @@ concurrency:
 
 jobs:
   stage:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: write
+      actions: read
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      VALIDATION_RUN_ID: ${{ github.event.workflow_run.id || '' }}
+      VALIDATION_CONCLUSION: ${{ github.event.workflow_run.conclusion || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SOURCE_SHA }}
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
-      - name: Verify release behavior
+      - name: Require successful hosted validation for this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          python -m unittest discover -s tests -v
-          python examples/walkthrough.py
-          python scripts/release_check.py
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            [[ "$VALIDATION_CONCLUSION" == "success" ]]
+            echo "HOSTED_CI_STATUS=success" >> "$GITHUB_ENV"
+            echo "HOSTED_CI_RUN_ID=$VALIDATION_RUN_ID" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          validation_json="$(gh run list             --workflow "Validate Developer Harness"             --commit "$SOURCE_SHA"             --status completed             --limit 20             --json databaseId,headSha,conclusion,createdAt)"
+          run_id="$(printf '%s' "$validation_json" | jq -r --arg sha "$SOURCE_SHA"             '[.[] | select(.headSha == $sha and .conclusion == "success")] | sort_by(.createdAt) | last | .databaseId // empty')"
+          if [[ -z "$run_id" ]]; then
+            echo "No successful full validation workflow exists for $SOURCE_SHA." >&2
+            exit 1
+          fi
+          echo "HOSTED_CI_STATUS=success" >> "$GITHUB_ENV"
+          echo "HOSTED_CI_RUN_ID=$run_id" >> "$GITHUB_ENV"
+      - name: Generate exact release validation record
+        run: python scripts/write_validation.py --output RELEASE_VALIDATION.json
       - name: Build and stage draft
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          SOURCE_SHA: ${{ github.sha }}
         shell: bash
         run: |
           set -euo pipefail
@@ -46,6 +77,4 @@ jobs:
             echo "Release already exists; leaving it unchanged."
             exit 0
           fi
-          gh release create "v${release_version}" "$archive" "${archive}.sha256" \
-            --draft --target "$SOURCE_SHA" \
-            --title "Developer Harness ${release_version}" --notes-file RELEASE_NOTES.md
+          gh release create "v${release_version}" "$archive" "${archive}.sha256"             --draft --target "$SOURCE_SHA"             --title "Developer Harness ${release_version}" --notes-file RELEASE_NOTES.md

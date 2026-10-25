@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 — 2026-10-25
+
+Hardening release focused on trustworthy release evidence and cross-platform determinism.
+
+- Use high-resolution monotonic timing for check and interruption receipts.
+- Remove the Windows/Python 3.11 timing-flake assumption from interruption regression testing.
+- Stage draft releases only after a successful full hosted validation workflow for the exact source commit.
+- Regenerate packaged release validation from commands actually executed during staging.
+- Bind release notes to the package version during deterministic release checks.
+
 ## 1.0.0 — 2026-10-24
 
 Initial release of Developer Harness: a universal local workflow layer for an existing AI coding tool.
