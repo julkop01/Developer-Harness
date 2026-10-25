@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 import sys
 
-from . import __version__, adapters, config, context, engine, install, runner, sessions
+from . import __version__, adapters, config, context, engine, install, mcp_inventory, runner, sessions
 from .store import Store
 from .util import HarnessError, atomic_write, json_write, read_json, redact, safe_path
 
@@ -150,6 +150,13 @@ def parser() -> argparse.ArgumentParser:
     p_events = commands.add_parser("host-events", help="inspect persisted normalized host events")
     p_events.add_argument("--session")
     p_events.add_argument("--limit", type=int, default=100)
+    p_mcp = commands.add_parser("mcp", help="persist and inspect normalized MCP inventory")
+    mcp_actions = p_mcp.add_subparsers(dest="action", required=True)
+    p_mcp_ingest = mcp_actions.add_parser("ingest")
+    p_mcp_ingest.add_argument("file", help="repository-relative dh.mcp.v1 JSON document")
+    mcp_actions.add_parser("list")
+    mcp_actions.add_parser("inventory")
+    mcp_actions.add_parser("drift")
     commands.add_parser("status")
     return p
 
@@ -207,6 +214,14 @@ def dispatch(args) -> dict | list:
             return sessions.ingest(store, read_json(safe_path(root, args.file)))
         if c == "host-events":
             return sessions.events(store, args.session, args.limit)
+        if c == "mcp":
+            if args.action == "ingest":
+                return mcp_inventory.ingest(store, read_json(safe_path(root, args.file)))
+            if args.action == "list":
+                return mcp_inventory.servers(store)
+            if args.action == "inventory":
+                return mcp_inventory.inventory(store)
+            return mcp_inventory.drift(store)
         if c == "task":
             if args.action == "new":
                 return engine.new_task(store, args.title, args.objective, args.criterion, args.scope, args.owner, args.risk, args.depends_on)
@@ -282,6 +297,7 @@ def dispatch(args) -> dict | list:
             return {"workspace": config.load(root)["name"], "tasks": {s: sum(t["state"] == s for t in tasks) for s in engine.TRANSITIONS},
                     "host_sessions": store.db.execute("SELECT count(*) FROM host_sessions").fetchone()[0],
                     "host_events": store.db.execute("SELECT count(*) FROM host_events").fetchone()[0],
+                    "mcp_sources": store.db.execute("SELECT count(*) FROM mcp_servers").fetchone()[0],
                     "budget": engine.budget(store), "integrity": store.audit()["ok"]}
     raise HarnessError("Unsupported command.")
 
