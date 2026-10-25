@@ -51,14 +51,13 @@ class RecoveryTests(unittest.TestCase):
 
     def test_interruption_updates_receipt_and_retains_nonzero_time(self):
         def interrupted(*args):
-            import time
-            time.sleep(0.01)
             raise KeyboardInterrupt()
         with patch.object(runner, "execute", side_effect=interrupted), self.assertRaises(KeyboardInterrupt):
             runner.run_check(self.store, self.task["id"], 2, "test", ["c1"])
         record = self.store.records("evidence", self.task["id"])[0]
         self.assertEqual(record["status"], "interrupted")
         self.assertGreater(record["elapsed_seconds"], 0)
+        self.assertLess(record["elapsed_seconds"], 1)
         self.assertFalse(engine.gate(self.store, self.task)["ok"])
 
     def test_failed_transition_leaves_no_partial_event(self):
