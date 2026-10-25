@@ -112,10 +112,11 @@ class ControlPlaneTests(unittest.TestCase):
         self.assertIn("context-pressure", [warning["kind"] for warning in snapshot["warnings"]])
 
     def test_non_git_workspace_degrades_with_warning(self):
-        self.store.close()
-        shutil.rmtree(self.root / ".git")
-        self.store = Store(self.root)
-        snapshot = control_plane.snapshot(self.store)
+        with tempfile.TemporaryDirectory() as folder:
+            other = Path(folder)
+            install.initialize(other)
+            with Store(other) as other_store:
+                snapshot = control_plane.snapshot(other_store)
         self.assertIsNone(snapshot["worktrees"])
         self.assertIn("worktree-unavailable", [warning["kind"] for warning in snapshot["warnings"]])
 
