@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.0 — 2026-10-25
+
+Added read-only worktree lifecycle and coordination visibility.
+
+- Enumerated Git worktrees and classified lifecycle state.
+- Added non-mutating merge conflict prediction with `git merge-tree`.
+- Added ahead/behind, dirty-file, merged, stale, and linked-session reporting.
+- Added conservative cleanup planning with no automatic removal.
+- Added cross-platform worktree lifecycle tests using temporary Git repositories.
+
 ## 1.4.0 — 2026-10-25
 
 Added persistent MCP inventory and cross-host drift detection.
