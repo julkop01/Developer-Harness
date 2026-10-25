@@ -10,6 +10,9 @@ Exit codes: **0** successful operation; **1** failed check or failing verificati
 | `install [--apply] [--adapter claude]` | Plan or apply a repository-local overlay |
 | `uninstall [--apply]` | Remove unchanged managed files/blocks; retain user data |
 | `discover`, `profiles`, `capabilities` | Read the structure, starting profiles, and actual capability boundaries |
+| `adapters` | List known AI coding hosts, instruction surfaces, supported canonical contracts, and whether a native bridge is actually implemented |
+| `protocol list` | List the strict canonical host contracts and their fields |
+| `protocol validate FILE` | Validate a repository-local JSON document against `dh.session.v1`, `dh.tool_event.v1`, `dh.context.v1`, `dh.permission.v1`, or `dh.mcp.v1` |
 | `config` | Show validated configuration |
 | `configure candidate.json [--apply]` | Validate a complete candidate; apply only when requested |
 | `task new TITLE --objective TEXT --criterion TEXT --scope PATH --owner NAME` | Create a small acceptance contract; repeat criteria/scopes as needed |
@@ -82,3 +85,16 @@ Scopes are repository-relative file paths or directory prefixes, not globs. `.` 
 `planned → active/blocked/cancelled`; `active → verifying/blocked/cancelled`; `verifying → active/review/blocked/cancelled`; `review → active/done/blocked/cancelled`; `blocked → planned/active/cancelled`; `done → active`; `cancelled → planned`.
 
 Every transition takes a reason and current version. Evidence, review, and checkpoint operations require the current task version too. Attaching proof does not increment the task version. The acceptance contract is immutable in version 1: create a replacement task and cancel the old one when scope or criteria must change.
+
+
+## Host adapter contracts
+
+Version 1.2 separates host-specific event collection from the deterministic kernel. A native bridge must normalize host data into one of these contracts before later runtime layers may consume it:
+
+- `dh.session.v1`: session identity, state, workspace, task/worktree association, and reported capabilities.
+- `dh.tool_event.v1`: before/after/failure tool lifecycle observations.
+- `dh.context.v1`: host-reported context usage, pressure, and compaction state.
+- `dh.permission.v1`: permission requests and decisions as observations; a record never grants authority by itself.
+- `dh.mcp.v1`: normalized MCP configuration metadata with environment key names only, never inline secret values.
+
+The `adapters` command currently reports known host surfaces as `contract-ready` with `native_bridge: false`. This is intentional: instruction-file compatibility is not the same thing as a tested event bridge. Future native adapters must change that flag only with implementation and contract tests.
