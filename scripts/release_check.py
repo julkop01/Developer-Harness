@@ -23,6 +23,9 @@ def main():
     metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     if metadata["project"]["version"] != __version__:
         failures.append("Version mismatch")
+    release_notes = (ROOT / "RELEASE_NOTES.md").read_text(encoding="utf-8")
+    if not release_notes.startswith(f"# Developer Harness {__version__}\n"):
+        failures.append("RELEASE_NOTES.md does not match the package version")
     for profile in (ROOT / "developer_harness/resources/profiles").glob("*.json"):
         try:
             config.make(profile.stem)
