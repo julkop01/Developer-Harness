@@ -110,3 +110,12 @@ Version 1.3 stores normalized host observations in the local SQLite authority. T
 Session snapshots are keyed by host session id. An id cannot change adapters, and an older `updated_at` snapshot cannot overwrite newer state. Session-bound events require the session to exist and must report the same adapter. Exact duplicate events are returned idempotently. Conflicting reuse of a source event identity is rejected.
 
 These tables are observability state, not authority. They do not satisfy task criteria, approve permissions, authorize external actions, or establish reviewer independence. `dh.mcp.v1` remains validation-only until a separate persistent inventory/drift contract is implemented.
+
+
+## MCP inventory and drift
+
+Version 1.4 can persist validated `dh.mcp.v1` records with `mcp ingest FILE`. Each source is identified by adapter, scope, and server name. `mcp inventory` groups sources by logical server name and reports whether repeated configurations are consistent. `mcp drift` returns only multi-source servers whose effective signatures differ.
+
+The signature covers transport plus command/arguments for stdio, or transport plus URL for remote MCP. Environment key names are metadata and are not part of the effective endpoint signature. Secret values are rejected before persistence: do not put credentials in args, URLs, or `env_keys` values.
+
+This inventory is diagnostic only. It does not install, launch, enable, disable, or authorize MCP servers, and it does not read global host configuration automatically in 1.4.
