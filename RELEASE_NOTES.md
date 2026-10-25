@@ -1,11 +1,9 @@
-# Developer Harness 1.4.0
+# Developer Harness 1.5.0
 
-Developer Harness 1.4 adds persistent normalized MCP inventory and cross-host drift detection.
+Developer Harness 1.5 adds read-only Git worktree lifecycle analysis and session-to-worktree visibility.
 
-Validated `dh.mcp.v1` records can now be stored in the local SQLite authority, keyed by adapter, scope, and logical server name. The harness computes a stable configuration signature and distinguishes ordinary fragmentation (the same server configured in multiple hosts) from actual drift (different effective transports/commands/URLs).
+The harness can enumerate repository worktrees, classify base/dirty/merged/merge-ready/conflict/stale/idle states, report ahead/behind counts, use `git merge-tree` for non-mutating conflict prediction, and associate normalized host sessions with their declared worktree path.
 
-Secret-bearing MCP values are rejected before persistence. Environment variable names are allowed, but inline values, secret-looking command arguments, credential userinfo, and credential query parameters are not accepted.
+`worktrees --cleanup-plan` produces a conservative plan only. It never removes a worktree, deletes a branch, merges code, or launches an agent. Dirty, locked, conflicting, active-session, and otherwise unproven worktrees remain in the keep set.
 
-New `mcp ingest`, `mcp list`, `mcp inventory`, and `mcp drift` commands expose the inventory without granting the MCP servers any authority. Ledger schema version 3 adds the inventory table and exports normalized MCP state.
-
-This remains local metadata and drift detection. Developer Harness still does not start MCP servers, install them, copy credentials, or modify host configuration automatically.
+This release builds on the 1.4 MCP inventory and the 1.3 host session ledger while keeping the deterministic task/evidence kernel authoritative.
